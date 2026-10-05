@@ -79,3 +79,11 @@ jobs:
         run: cmake --build build --target libs
       - shell: cmd
         run: ctest --test-dir build --output-on-failure --timeout 120 --repeat until-fail:3
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AnyPS5-Windows-Latest
+          path: |
+            build/bin/**/*.exe
+            build/**/*.exe
+            build_win/**/*.exe

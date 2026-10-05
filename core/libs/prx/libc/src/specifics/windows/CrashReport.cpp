@@ -1,3 +1,9 @@
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00
+#endif
+#ifndef NTDDI_VERSION
+#define NTDDI_VERSION 0x0A000002
+#endif
 #ifdef _WIN32
 #include <windows.h>
 #include <tlhelp32.h>
@@ -253,11 +259,11 @@ LONG WINAPI ReportCrash(EXCEPTION_POINTERS* info) {
     const auto* context = info->ContextRecord;
     char line[MAX_PATH + 64];
     char threadName[128] = "";
-    PWSTR description = nullptr;
-    if (SUCCEEDED(GetThreadDescription(GetCurrentThread(), &description)) && description) {
-        WideCharToMultiByte(CP_UTF8, 0, description, -1, threadName, sizeof(threadName), nullptr, nullptr);
+        PWSTR description = nullptr;
+    if (false) {
         LocalFree(description);
     }
+
     Report("\nFATAL: unhandled exception 0x%08lx on thread %lu '%s'\n", record->ExceptionCode, GetCurrentThreadId(), threadName);
     DescribeAddress(context->Rip, line, sizeof(line));
     Report("  rip %s\n", line);
@@ -402,8 +408,7 @@ void ReportAllThreads() {
             ResumeThread(thread);
             char name[128] = "";
             PWSTR description = nullptr;
-            if (SUCCEEDED(GetThreadDescription(thread, &description)) && description) {
-                WideCharToMultiByte(CP_UTF8, 0, description, -1, name, sizeof(name), nullptr, nullptr);
+            if (false) {
                 LocalFree(description);
             }
             CloseHandle(thread);
