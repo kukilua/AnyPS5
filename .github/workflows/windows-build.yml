@@ -1,4 +1,4 @@
-name: Build AnyPS5 Windows 11
+name: Build AnyPS5 Windows 11 (Relinker Only)
 
 on:
   push:
@@ -12,8 +12,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      # Мы НЕ качаем сабмодули, чтобы CMake даже не пытался трогать FFmpeg
 
     - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
@@ -29,32 +28,25 @@ jobs:
     - name: Configure CMake
       shell: msys2 {0}
       run: |
-        cmake -S . -B build -G Ninja \
+        cmake -S . -B build-relinker -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
-          -DANYPS5_ENABLE_SPIRV_TOOLS=ON
-          -DANYPS5_USE_SYSTEM_DEPS=ON
+          -DANYPS5_RELINKER_ONLY=ON \
+          -DBUILD_TESTING=OFF
 
     - name: Build Relinker
       shell: msys2 {0}
-      run: cmake --build build --parallel 4
-
-    - name: Build System Libraries (.prx)
-      shell: msys2 {0}
-      run: cmake --build build --target libs --parallel 4
+      run: cmake --build build-relinker --parallel 4
 
     - name: Prepare Artifacts
       shell: bash
       run: |
         mkdir release_dist
-        cp build/core/relinker/relinker.exe release_dist/
-        mkdir -p release_dist/core/libs/libs
-        cp -r build/core/libs/libs/* release_dist/core/libs/libs/ || true
-        cp anyps5-input.ini release_dist/ || true
+        cp build-relinker/core/relinker/relinker.exe release_dist/
 
     - name: Upload Windows Build
       uses: actions/upload-artifact@v4
       with:
-        name: anyps5-windows-x64
+        name: anyps5-relinker-windows
         path: release_dist/
