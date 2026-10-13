@@ -1,0 +1,62 @@
+name: Build AnyPS5 Windows
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой в Actions
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive # Скачивает все сабмодули проекта
+
+    - name: Setup MSYS2 (MinGW-w64)
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: CLANG64 # Используем окружение с поддержкой свежих GCC/Clang инструментов
+        update: true
+        install: >-
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-ninja
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-toolchain
+
+    - name: Configure CMake
+      shell: msys2 {0}
+      run: |
+        cmake -S . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DANYPS5_ENABLE_SPIRV_TOOLS=ON
+
+    - name: Build Relinker
+      shell: msys2 {0}
+      run: cmake --build build --parallel 4
+
+    - name: Build System Libraries (.prx)
+      shell: msys2 {0}
+      run: cmake --build build --target libs --parallel 4
+
+    - name: Prepare Artifacts
+      shell: bash
+      run: |
+        mkdir release_dist
+        # Копируем сам конвертер
+        cp build/core/relinker/relinker.exe release_dist/
+        # Создаем папку под библиотеки и копируем скомпилированные .prx/.dll
+        mkdir -p release_dist/core/libs/libs
+        cp -r build/core/libs/libs/* release_dist/core/libs/libs/ || true
+        # Если создался ini-файл для управления, закидываем и его
+        cp anyps5-input.ini release_dist/ || true
+
+    - name: Upload Windows Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: anyps5-windows-x64
+        path: release_dist/
