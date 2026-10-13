@@ -1,9 +1,9 @@
-name: Build AnyPS5 Windows
+name: Build AnyPS5 Windows 11
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой в Actions
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -13,12 +13,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        submodules: recursive # Скачивает все сабмодули проекта
+        submodules: recursive
 
-    - name: Setup MSYS2 (MinGW-w64)
+    - name: Setup MSYS2
       uses: msys2/setup-msys2@v2
       with:
-        msystem: CLANG64 # Используем окружение с поддержкой свежих GCC/Clang инструментов
+        msystem: MINGW64
         update: true
         install: >-
           mingw-w64-x86_64-cmake
@@ -47,12 +47,9 @@ jobs:
       shell: bash
       run: |
         mkdir release_dist
-        # Копируем сам конвертер
         cp build/core/relinker/relinker.exe release_dist/
-        # Создаем папку под библиотеки и копируем скомпилированные .prx/.dll
         mkdir -p release_dist/core/libs/libs
         cp -r build/core/libs/libs/* release_dist/core/libs/libs/ || true
-        # Если создался ini-файл для управления, закидываем и его
         cp anyps5-input.ini release_dist/ || true
 
     - name: Upload Windows Build
