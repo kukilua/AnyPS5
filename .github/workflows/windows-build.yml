@@ -34,6 +34,7 @@ jobs:
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
           -DANYPS5_ENABLE_SPIRV_TOOLS=ON
+          -DANYPS5_USE_SYSTEM_DEPS=ON
 
     - name: Build Relinker
       shell: msys2 {0}
